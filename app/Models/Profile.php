@@ -10,9 +10,8 @@ class Profile extends Model
 {
     use HasFactory, Uuid;
 
-    protected $guarded = ['uuid'];
+    protected $guarded = ['id'];
     protected $table = 'profiles';
-    protected $primaryKey = 'uuid';
     public $incrementing = false;
 
     /*

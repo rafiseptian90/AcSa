@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Libs\Response;
-use App\Models\ApplicationType;
+use App\Models\Account;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Libs\Response;
 
-class ApplicationTypeController extends Controller
+class AccountController extends Controller
 {
     public function __construct(){
         $this->middleware('auth.jwt');
@@ -20,13 +20,14 @@ class ApplicationTypeController extends Controller
      */
     public function index(): JsonResponse
     {
-        // get all application types
-        $app_types = ApplicationType::all();
+        $accounts = Account::whereHas('user', function($user){
+                        $user->whereId(auth()->user()->id);
+                    })->get();
 
         // throw response
         return Response::success([
             'message' => 'Data has been loaded',
-            'data' => $app_types
+            'data' => $accounts
         ]);
     }
 
@@ -36,7 +37,7 @@ class ApplicationTypeController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         // request validation
         $this->reqValidation($request);
@@ -45,35 +46,42 @@ class ApplicationTypeController extends Controller
         $requests = $request->all();
 
         // if request has image
-        if($request->hasFile('logo')){
-            $requests['logo'] = cloudinary()->upload($request->file('logo')->getRealPath(), ['folder' => 'application_types'])->getSecurePath();
+        if($request->hasFile('photo')){
+            $requests['photo'] = cloudinary()->upload($request->file('photo')->getRealPath(), ['folder' => 'accounts'])->getSecurePath();
         }
 
-        // store new application type
-        $types = ApplicationType::create($requests);
+        // store new account
+        $account = Account::create($requests);
 
         // throw response
         return Response::success([
-            'message' => 'Application type has been created',
-            'data' => $types
+            'message' => 'Account has been created',
+            'data' => $account
         ]);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param $id
+     * @param  $id
      * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // find the data
-        $app_type = ApplicationType::withCount('applications')->findOrFail($id);
+        // find data
+        $account = Account::with(['app', 'user'])->findOrFail($id);
+
+        // check if the account user id isn't match with user that logged in
+        if($account->user_id !== auth()->user()->id){
+            return Response::forbidden([
+                'message' => 'Access forbidden !'
+            ]);
+        }
 
         // throw response
         return Response::success([
             'message' => 'Data has been loaded',
-            'data' => $app_type
+            'data' => $account
         ]);
     }
 
@@ -86,34 +94,26 @@ class ApplicationTypeController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
-        // find app type
-        $app_type = ApplicationType::findOrFail($id);
+        // find data
+        $account = Account::findOrFail($id);
 
-        // request validation
-        $this->reqValidation($request);
-
-        // catch all request
-        $requests = $request->all();
+        // check if the account user id isn't match with user that logged in
+        if($account->user_id !== auth()->user()->id){
+            return Response::forbidden([
+                'message' => 'Access forbidden !'
+            ]);
+        }
 
         // if request has image
-        if($request->hasFile('logo')){
-            // if current logo is not null
-            if($app_type->logo !== NULL){
-                cloudinary()->destroy($this->imageID($app_type->logo));
+        if($request->hasFile('photo')){
+            // if current photo is not null
+            if($account->photo !== NULL){
+                cloudinary()->destroy($this->imageID($account->photo));
             }
 
             // store image
-            $requests['logo'] = Storage::disk('public')->put('/application_types', $request->file('logo'));
+            $requests['photo'] = cloudinary()->upload($request->file('photo')->getRealPath(), ['folder' => 'accounts'])->getSecurePath();
         }
-
-        // update app type
-        $app_type->update($requests);
-
-        // throw response
-        return Response::success([
-            'message' => 'Application type has been updated',
-            'data' => $app_type
-        ]);
     }
 
     /**
@@ -124,26 +124,26 @@ class ApplicationTypeController extends Controller
      */
     public function destroy($id): JsonResponse
     {
-        // find app type
-        $app_type = ApplicationType::findOrFail($id);
+        // find app
+        $account = Account::findOrFail($id);
 
         // if current logo is not null
-        if($app_type->logo !== NULL){
-            cloudinary()->destroy($this->imageID($app_type->logo));
+        if($account->logo !== NULL){
+            cloudinary()->destroy($this->imageID($account->photo));
         }
 
-        // destroy application type
-        $app_type->delete();
+        // destroy account
+        $account->delete();
 
         // throw response
-        return Response::success(['message' => 'Application type has been deleted']);
+        return Response::success(['message' => 'Account has been deleted']);
     }
 
-    // validation method
     private function reqValidation($request){
         $this->validate($request, [
-            'name' => 'required',
-            'logo' => 'image|mimes:jpg,png,jpeg|max:5120'
+            'description' => 'string|required|max:191',
+            'password' => 'required',
+            'photo' => 'image|mimes:jpg,png,jpeg|max:5120'
         ]);
     }
 

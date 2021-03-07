@@ -24,13 +24,7 @@ class ProfileController extends Controller
         $profile = Profile::whereUserId($user->id)->first();
 
         // request validation
-        $this->validate($request, [
-            'name' => 'required|regex:/^[a-z A-Z]+$/',
-            'email' => 'required|unique:users,email,' . $user->id,
-            'username' => 'nullable|unique:users,username,' . $user->id,
-            'pin' => 'nullable|unique:users,pin,' . $user->id,
-            'avatar' => 'image|mimes:jpg,png,jpeg|max:5120',
-        ]);
+        $this->reqValidation($request, $user);
 
         // catch request for update user
         $userReq = $request->only(['username', 'email', 'pin']);
@@ -39,10 +33,40 @@ class ProfileController extends Controller
         // update user
         $user->update($userReq);
 
+        // if request has image
+        if($request->hasFile('avatar')){
+            if($profile->avatar !== NULL){
+                cloudinary()->destroy($this->imageID($profile->avatar));
+            }
+            // upload file to cloudinary
+            $profileReq['avatar'] = cloudinary()->upload($request->file('avatar')->getRealPath(), ['folder' => 'users'])->getSecurePath();
+        }
+
         // update profile
         $profile->update($profileReq);
 
         // throw response
         return Response::success(['message' => 'Profile has been updated']);
+    }
+
+    private function reqValidation($request, $user){
+        $this->validate($request, [
+            'name' => 'required|regex:/^[a-z A-Z]+$/',
+            'email' => 'required|unique:users,email,' . $user->id,
+            'username' => 'nullable|unique:users,username,' . $user->id,
+            'pin' => 'nullable|unique:users,pin,' . $user->id,
+            'avatar' => 'image|mimes:jpg,png,jpeg|max:5120',
+        ]);
+    }
+
+    private function imageID($image): array
+    {
+        $images = [];
+        // get image ID
+        $path = explode('/', $image);
+        $imagePath = $path[count($path) - 2] . '/' . explode('.', $path[count($path) - 1])[0];
+
+        array_push($images, $imagePath);
+        return $images;
     }
 }

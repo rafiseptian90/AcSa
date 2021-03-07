@@ -34,6 +34,8 @@ Route::group([
 
     // API resource endpoint
     Route::apiResources([
-        'app-type' => 'ApplicationTypeController'
+        'app-type' => 'ApplicationTypeController',
+        'app' => 'ApplicationController',
+        'account' => 'AccountController',
     ]);
 });

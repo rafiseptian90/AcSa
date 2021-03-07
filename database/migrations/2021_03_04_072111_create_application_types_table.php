@@ -14,9 +14,9 @@ class CreateApplicationTypesTable extends Migration
     public function up()
     {
         Schema::create('app_types', function (Blueprint $table) {
-            $table->uuid('uuid')->primary();
+            $table->uuid('id')->primary();
             $table->string('name');
-            $table->string('logo')->nullable();
+            $table->string('logo')->default('application_types/default.png');
             $table->text('description')->nullable();
             $table->timestamps();
         });

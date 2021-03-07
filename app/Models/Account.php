@@ -10,15 +10,21 @@ class Account extends Model
 {
     use HasFactory, Uuid;
 
-    protected $guarded = ['uuid'];
+    protected $guarded = ['id'];
     protected $table = 'accounts';
-    protected $primaryKey = 'uuid';
     public $incrementing = false;
 
     /*
      * Relations
      * */
-    public function app(){
+    // to application
+    public function app(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
         return $this->belongsTo(Application::class, 'app_id');
+    }
+    // to user
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

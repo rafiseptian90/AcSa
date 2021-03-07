@@ -42,7 +42,7 @@ class User extends Authenticatable implements JWTSubject
      *
      * @var array
      */
-    protected $guarded = ['uuid'];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -64,7 +64,6 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     public $incrementing = false;
-    protected $primaryKey = 'uuid';
 
     /*
      * Relations

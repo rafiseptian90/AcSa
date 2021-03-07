@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
 
         // create profile
         $profile = [
-            'user_id' => $user->uuid,
+            'user_id' => $user->id,
             'name' => 'Rafi Septian Hadi',
             'bio' => "My name is Rafi Septian Hadi and I am a Junior Web Developer for Oswald Technologies. I am an accomplished coder and programmer, and I enjoy using my skills to contribute to the exciting technological advances that happen every day at Oswald Tech.",
         ];

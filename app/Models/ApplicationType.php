@@ -10,14 +10,14 @@ class ApplicationType extends Model
 {
     use HasFactory, Uuid;
 
-    protected $guarded = ['uuid'];
+    protected $guarded = ['id'];
     protected $table = 'app_types';
-    protected $primaryKey = 'uuid';
     public $incrementing = false;
 
     /*
      * Relations
      * */
+    // to application
     public function applications(){
         return $this->hasMany(Application::class, 'app_type_id');
     }

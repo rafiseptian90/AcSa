@@ -10,15 +10,22 @@ class Application extends Model
 {
     use HasFactory, Uuid;
 
-    protected $guarded = ['uuid'];
+    protected $guarded = ['id'];
     protected $table = 'apps';
-    protected $primaryKey = 'uuid';
     public $incrementing = false;
 
     /*
      * Relations
      * */
-    public function type(){
+    // to application type
+    public function type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
         return $this->belongsTo(ApplicationType::class, 'app_type_id');
+    }
+
+    // to accounts
+    public function accounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Account::class, 'app_id');
     }
 }

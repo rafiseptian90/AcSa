@@ -46,9 +46,11 @@ class AuthController extends Controller
      * Method: POST
      * */
     public function profile(){
+        $profile = User::with(['profile'])->findOrFail(auth()->user()->id);
+
         return Response::success([
             'message' => 'Data has been loaded',
-            'data' => User::with('profile')->whereId(auth()->user()->uuid)->first()
+            'data' => $profile
         ]);
     }
 
@@ -107,7 +109,7 @@ class AuthController extends Controller
             'accessToken'=> $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'userData' => User::with(['profile'])->whereId(auth()->user()->uuid)->first(),
+            'userData' => User::with(['profile'])->whereId(auth()->user()->id)->first(),
         ]);
     }
 }

@@ -14,18 +14,24 @@ class CreateAccountsTable extends Migration
     public function up()
     {
         Schema::create('accounts', function (Blueprint $table) {
-            $table->uuid('uuid')->primary();
+            $table->uuid('id')->primary();
             $table->uuid('app_id');
             $table->foreign('app_id')
-                  ->references('uuid')
+                  ->references('id')
                   ->on('apps')
                   ->onDelete('cascade')
                   ->onUpdate('cascade');
+            $table->uuid('user_id');
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
             $table->string('username')->nullable();
             $table->string('email')->nullable();
             $table->string('password');
-            $table->string('description');
-            $table->string('photo')->nullable();
+            $table->string('description')->nullable();
+            $table->string('photo')->default('accounts/default.png');
             $table->timestamps();
         });
     }

@@ -2,7 +2,9 @@
 
 namespace App\Exceptions;
 
+use App\Libs\Response;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use \Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -37,5 +39,16 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function render($request, Throwable $e)
+    {
+        if ($e instanceof ModelNotFoundException) {
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
+
+        return parent::render($request, $e);
     }
 }

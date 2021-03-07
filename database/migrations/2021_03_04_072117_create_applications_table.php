@@ -14,16 +14,16 @@ class CreateApplicationsTable extends Migration
     public function up()
     {
         Schema::create('apps', function (Blueprint $table) {
-            $table->uuid('uuid')->primary();
+            $table->uuid('id')->primary();
             $table->uuid('app_type_id');
             $table->foreign('app_type_id')
-                ->references('uuid')
+                ->references('id')
                 ->on('app_types')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
             $table->string('name');
-            $table->string('logo')->nullable();
-            $table->text('description');
+            $table->string('logo')->default('applications/default.png');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

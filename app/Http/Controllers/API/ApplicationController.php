@@ -7,6 +7,7 @@ use App\Libs\Response;
 use App\Models\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationController extends Controller
@@ -44,6 +45,7 @@ class ApplicationController extends Controller
 
         // catch all request
         $requests = $request->all();
+        $requests['app_type_id'] = $this->getType(Str::slug(request('type')));
 
         // if request has image
         if($request->hasFile('logo')){
@@ -156,5 +158,9 @@ class ApplicationController extends Controller
 
         array_push($images, $imagePath);
         return $images;
+    }
+
+    private function getType($slug){
+        return \App\Models\ApplicationType::whereSlug($slug)->first()['id'];
     }
 }

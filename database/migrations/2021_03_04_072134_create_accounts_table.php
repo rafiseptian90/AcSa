@@ -32,6 +32,7 @@ class CreateAccountsTable extends Migration
             $table->string('password');
             $table->string('description')->nullable();
             $table->string('photo')->nullable();
+            $table->enum('status', ['active', 'deactivate'])->default('active');
             $table->timestamps();
         });
     }

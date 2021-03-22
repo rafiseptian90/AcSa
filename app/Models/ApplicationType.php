@@ -17,6 +17,14 @@ class ApplicationType extends Model
     public $incrementing = false;
 
     /*
+     * Scope
+     * */
+    public function scopeOrderedAsc($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
+    /*
      * Mutators
      * */
     // set slug by name

@@ -15,6 +15,14 @@ class Account extends Model
     public $incrementing = false;
 
     /*
+     * Scope
+     * */
+    public function scopeOrderedAsc($query)
+    {
+        return $query->orderBy('created_at', 'asc');
+    }
+
+    /*
      * Relations
      * */
     // to application

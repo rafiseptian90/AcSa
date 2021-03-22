@@ -21,8 +21,10 @@ class AccountController extends Controller
     public function index(): JsonResponse
     {
         $accounts = Account::whereHas('user', function($user){
-                        $user->whereId(auth()->user()->id);
-                    })->get();
+                                $user->whereId(auth()->user()->id);
+                            })
+                            ->whereAppId(request('app_id'))
+                            ->get();
 
         // throw response
         return Response::success([
@@ -37,7 +39,7 @@ class AccountController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         // request validation
         $this->reqValidation($request);

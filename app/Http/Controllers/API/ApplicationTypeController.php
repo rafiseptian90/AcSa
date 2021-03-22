@@ -21,7 +21,7 @@ class ApplicationTypeController extends Controller
     public function index(): JsonResponse
     {
         // get all application types
-        $app_types = ApplicationType::withCount('applications')->get();
+        $app_types = ApplicationType::withCount('applications')->orderedAsc()->get();
 
         // throw response
         return Response::success([

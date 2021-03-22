@@ -22,6 +22,7 @@ class ApplicationController extends Controller
         // get all application
         $apps = Application::withCount('accounts')
                             ->filter(request()->all())
+                            ->orderedAsc()
                             ->get();
 
         // throw response

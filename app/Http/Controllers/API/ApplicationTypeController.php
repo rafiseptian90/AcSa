@@ -62,13 +62,22 @@ class ApplicationTypeController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show($slug): JsonResponse
     {
         // find the data
-        $app_type = ApplicationType::withCount('applications')->findOrFail($id);
+        $app_type = ApplicationType::withCount('applications')
+                                    ->whereSlug($slug)
+                                    ->first();
+
+        // check existing data
+        if(!$app_type){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // throw response
         return Response::success([
@@ -81,16 +90,23 @@ class ApplicationTypeController extends Controller
      * Update the specified resource in storage.
      *
      * @param Request $request
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $slug): JsonResponse
     {
         // find app type
-        $app_type = ApplicationType::findOrFail($id);
+        $app_type = ApplicationType::whereSlug($slug)->first();
+
+        // check existing data
+        if(!$app_type){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // request validation
-        $this->reqValidation($request);
+        $this->reqValidation($request, $app_type->id);
 
         // catch all request
         $requests = $request->all();
@@ -119,13 +135,20 @@ class ApplicationTypeController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy($slug): JsonResponse
     {
         // find app type
-        $app_type = ApplicationType::findOrFail($id);
+        $app_type = ApplicationType::whereSlug($slug)->first();
+
+        // check existing data
+        if(!$app_type){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // if current logo is not null
         if($app_type->logo !== NULL){
@@ -140,10 +163,11 @@ class ApplicationTypeController extends Controller
     }
 
     // validation method
-    private function reqValidation($request){
+    private function reqValidation($request, $id = null){
         $this->validate($request, [
             'name' => 'required',
-            'logo' => 'image|mimes:jpg,png,jpeg|max:5120'
+            'logo' => 'image|mimes:jpg,png,jpeg|max:5120',
+            'slug' => 'unique:app_types,slug' . $id ? ',' . $id : ''
         ]);
     }
 

@@ -42,10 +42,11 @@ class AccountController extends Controller
     public function store(Request $request): JsonResponse
     {
         // request validation
-        $this->reqValidation($request);
+        $this->reqValidation($request, 'POST', $request->app_id);
 
         // catch all request
         $requests = $request->all();
+        $requests['app_id'] = $this->getAppID($request->app_id);
 
         // if request has image
         if($request->hasFile('photo')){
@@ -65,13 +66,24 @@ class AccountController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  $id
+     * @param  $slug
      * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show($slug): JsonResponse
     {
         // find data
-        $account = Account::with(['app', 'user'])->findOrFail($id);
+        $account = Account::with(['app', 'user'])
+                            ->whereAppId($this->getAppID(request()->app_id))
+                            ->whereUsername($slug)
+                            ->orWhere('email', $slug)
+                            ->first();
+
+        // check existing data
+        if(!$account){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // check if the account user id isn't match with user that logged in
         if($account->user_id !== auth()->user()->id){
@@ -91,13 +103,24 @@ class AccountController extends Controller
      * Update the specified resource in storage.
      *
      * @param Request $request
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $slug): JsonResponse
     {
         // find data
-        $account = Account::findOrFail($id);
+        $account = Account::with(['app', 'user'])
+                            ->whereAppId($this->getAppID(request()->app_id))
+                            ->whereUsername($slug)
+                            ->orWhere('email', $slug)
+                            ->first();
+
+        // check existing data
+        if(!$account){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // check if the account user id isn't match with user that logged in
         if($account->user_id !== auth()->user()->id){
@@ -105,6 +128,12 @@ class AccountController extends Controller
                 'message' => 'Access forbidden !'
             ]);
         }
+
+        $this->reqValidation($request, 'PUT', $request->app_id, $account->id);
+
+        // get requests
+        $requests = $request->all();
+        $requests['app_id'] = $this->getAppID($request->app_id);
 
         // if request has image
         if($request->hasFile('photo')){
@@ -116,18 +145,38 @@ class AccountController extends Controller
             // store image
             $requests['photo'] = cloudinary()->upload($request->file('photo')->getRealPath(), ['folder' => 'accounts'])->getSecurePath();
         }
+
+        // update account
+        $account->update($requests);
+
+        // throw response
+        return Response::success([
+            'message' => 'Account has been updated',
+            'data' => $account
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy($slug): JsonResponse
     {
-        // find app
-        $account = Account::findOrFail($id);
+        // find data
+        $account = Account::with(['app', 'user'])
+                            ->whereAppId($this->getAppID(request()->app_id))
+                            ->whereUsername($slug)
+                            ->orWhere('email', $slug)
+                            ->first();
+
+        // check existing data
+        if(!$account){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // if current logo is not null
         if($account->logo !== NULL){
@@ -141,12 +190,29 @@ class AccountController extends Controller
         return Response::success(['message' => 'Account has been deleted']);
     }
 
-    private function reqValidation($request){
-        $this->validate($request, [
-            'description' => 'string|required|max:191',
-            'password' => 'required',
-            'photo' => 'image|mimes:jpg,png,jpeg|max:5120'
-        ]);
+    private function reqValidation($request, $method, $app_slug, $id = null){
+        if($method === 'POST'){
+            $this->validate($request, [
+                'app_id' => 'required',
+                'description' => 'string|required|max:191',
+                'password' => 'required',
+                'photo' => 'image|mimes:jpg,png,jpeg|max:5120',
+                'username' => "required_if:email,null|unique:accounts,username,NULL,id,app_id,". $this->getAppID($app_slug),
+                'email' => "required_if:username,null|unique:accounts,email,NULL,id,app_id,". $this->getAppID($app_slug)
+            ], [
+                'username.required_if' => 'Username is required when the email not set',
+                'email.required_if' => 'Email is required when the username not set',
+            ]);
+        }
+        else if($method === 'PUT'){
+            $this->validate($request, [
+                'app_id' => 'required',
+                'description' => 'string|required|max:191',
+                'photo' => 'image|mimes:jpg,png,jpeg|max:5120',
+                'username' => "required_if:email,null|unique:accounts,username,". $id .",id,app_id,". $this->getAppID($app_slug),
+                'email' => "required_if:username,null|unique:accounts,email,". $id .",id,app_id,". $this->getAppID($app_slug)
+            ]);
+        }
     }
 
     // get image ID
@@ -159,5 +225,16 @@ class AccountController extends Controller
 
         array_push($images, $imagePath);
         return $images;
+    }
+
+    // get app id by slug
+    private function getAppID($slug){
+        $app = \App\Models\Application::whereSlug($slug)->first();
+
+        if(!$app){
+            return '';
+        }
+
+        return $app->id;
     }
 }

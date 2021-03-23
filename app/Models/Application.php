@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Libs\Response;
 use App\Traits\Uuid;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,7 @@ class Application extends Model
 
     protected $guarded = ['id'];
     protected $table = 'apps';
+    protected $hidden = ['app_type_id', 'id', 'created_at', 'updated_at'];
     public $incrementing = false;
 
     /*

@@ -12,6 +12,7 @@ class Account extends Model
 
     protected $guarded = ['id'];
     protected $table = 'accounts';
+    protected $hidden = ['app_id', 'user_id', 'id', 'created_at', 'updated_at'];
     public $incrementing = false;
 
     /*

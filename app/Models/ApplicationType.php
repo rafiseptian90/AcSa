@@ -14,6 +14,7 @@ class ApplicationType extends Model
 
     protected $guarded = ['id'];
     protected $table = 'app_types';
+    protected $hidden = ['id'];
     public $incrementing = false;
 
     /*

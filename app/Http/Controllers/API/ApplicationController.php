@@ -66,12 +66,19 @@ class ApplicationController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show($slug): JsonResponse
     {
-        $app = Application::with(['accounts'])->withCount('accounts')->findOrFail($id);
+        $app = Application::with(['accounts'])->withCount('accounts')->whereSlug($slug)->first();
+
+        // check existing data
+        if(!$app){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // throw response
         return Response::success([
@@ -84,16 +91,23 @@ class ApplicationController extends Controller
      * Update the specified resource in storage.
      *
      * @param Request $request
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $slug): JsonResponse
     {
         // find app
-        $app = Application::findOrFail($id);
+        $app = Application::whereSlug($slug)->first();
+
+        // check existing data
+        if(!$app){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // request validation
-        $this->reqValidation($request);
+        $this->reqValidation($request, $app->id);
 
         // catch all request
         $requests = $request->all();
@@ -122,13 +136,20 @@ class ApplicationController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param $id
+     * @param $slug
      * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy($slug): JsonResponse
     {
         // find app
-        $app = Application::findOrFail($id);
+        $app = Application::whereSlug($slug)->first();
+
+        // check existing data
+        if(!$app){
+            return Response::notfound([
+                'message' => 'Data not found !'
+            ]);
+        }
 
         // if current logo is not null
         if($app->logo !== NULL){
@@ -142,10 +163,11 @@ class ApplicationController extends Controller
         return Response::success(['message' => 'Application has been deleted']);
     }
 
-    private function reqValidation($request){
+    private function reqValidation($request, $id = null){
         $this->validate($request, [
             'name' => 'required',
-            'logo' => 'image|mimes:jpg,png,jpeg|max:5120'
+            'logo' => 'image|mimes:jpg,png,jpeg|max:5120',
+            'slug' => 'unique:apps,slug' . $id ? ',' . $id : ''
         ]);
     }
 
